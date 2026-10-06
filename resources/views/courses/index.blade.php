@@ -108,8 +108,34 @@
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     
     function getModal() {
-        return bootstrap.Modal.getOrCreateInstance(document.getElementById('courseModal'));
+        const modalEl = document.getElementById('courseModal');
+        return bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     }
+
+    function closeModal() {
+        const modalEl = document.getElementById('courseModal');
+        const instance = bootstrap.Modal.getInstance(modalEl);
+        if (instance) {
+            instance.hide();
+        }
+        cleanupBackdrop();
+    }
+
+    function cleanupBackdrop() {
+        setTimeout(() => {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }, 200);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const modalEl = document.getElementById('courseModal');
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', cleanupBackdrop);
+        }
+    });
 
     // Load courses on page ready
     if (document.readyState === 'loading') {
@@ -246,7 +272,7 @@
             const data = await response.json();
 
             if (response.ok) {
-                getModal().hide();
+                closeModal();
                 loadCourses();
             } else {
                 let errorMsg = data.message || 'Operation failed.';
