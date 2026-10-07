@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('course_student', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('student_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('course_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('student_id'); // FK defined in Student Model
+            $table->unsignedBigInteger('course_id');  // FK defined in Course Model
             $table->timestamps();
 
-            $table->unique(['student_id', 'course_id']);
+            // Composite index for query performance
+            $table->index(['student_id', 'course_id']);
+            // unique(['student_id','course_id']) enforced in Model via $rules
         });
     }
 

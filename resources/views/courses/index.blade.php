@@ -10,7 +10,7 @@
             <span>Courses List</span>
         </h5>
         <div>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#courseModal" onclick="openCreateModal()">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCourseModal" onclick="openCreateModal()">
                 <i class="bi bi-plus-lg me-1"></i> Add New Course
             </button>
         </div>
@@ -50,70 +50,28 @@
             <i class="bi bi-journal-x text-muted" style="font-size: 3rem;"></i>
             <h5 class="mt-3 text-secondary">No courses found</h5>
             <p class="text-muted">Click the button below to add your first course.</p>
-            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#courseModal" onclick="openCreateModal()">
+            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#createCourseModal" onclick="openCreateModal()">
                 <i class="bi bi-plus-lg me-1"></i> Add Course
             </button>
         </div>
     </div>
 </div>
 
-<!-- Modal for Create / Edit Course -->
-<div class="modal fade" id="courseModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="modalTitle">Add New Course</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div id="modalAlert" class="alert alert-danger d-none"></div>
-
-                <form id="courseForm" onsubmit="handleFormSubmit(event)">
-                    <input type="hidden" id="courseId">
-
-                    <div class="row">
-                        <div class="col-md-5 mb-3">
-                            <label for="code" class="form-label fw-semibold">Course Code <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="code" required placeholder="e.g. CS101">
-                        </div>
-                        <div class="col-md-7 mb-3">
-                            <label for="name" class="form-label fw-semibold">Course Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" required placeholder="e.g. Database Systems">
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="credits" class="form-label fw-semibold">Credits</label>
-                        <input type="number" class="form-control" id="credits" min="1" max="10" value="3" placeholder="3">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="description" class="form-label fw-semibold">Description</label>
-                        <textarea class="form-control" id="description" rows="3" placeholder="Brief course overview..."></textarea>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="saveBtn">
-                            <i class="bi bi-check2-circle me-1"></i> Save
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+{{-- Modals included from partial files --}}
+@include('courses._create_course_modal')
+@include('courses._edit_course_modal')
+@include('courses._show_course_modal')
 
 <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     
-    function getModal() {
-        const modalEl = document.getElementById('courseModal');
+    function getModal(id) {
+        const modalEl = document.getElementById(id);
         return bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     }
 
-    function closeModal() {
-        const modalEl = document.getElementById('courseModal');
+    function closeModal(id) {
+        const modalEl = document.getElementById(id);
         const instance = bootstrap.Modal.getInstance(modalEl);
         if (instance) {
             instance.hide();
@@ -131,18 +89,14 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const modalEl = document.getElementById('courseModal');
-        if (modalEl) {
-            modalEl.addEventListener('hidden.bs.modal', cleanupBackdrop);
-        }
-    });
-
-    // Load courses on page ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadCourses);
-    } else {
+        ['createCourseModal', 'editCourseModal', 'showCourseModal'].forEach(id => {
+            const modalEl = document.getElementById(id);
+            if (modalEl) {
+                modalEl.addEventListener('hidden.bs.modal', cleanupBackdrop);
+            }
+        });
         loadCourses();
-    }
+    });
 
     // Fetch all courses from API (Returns JSON)
     async function loadCourses() {
@@ -168,6 +122,7 @@
             if (result.data && result.data.length > 0) {
                 tbody.innerHTML = '';
                 result.data.forEach(course => {
+                    const courseJson = JSON.stringify(course).replace(/"/g, '&quot;');
                     const row = `
                         <tr>
                             <td class="ps-4 fw-semibold text-secondary">#${course.id}</td>
@@ -192,10 +147,13 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="btn-group" role="group">
-                                    <a href="/courses/${course.id}" class="btn btn-sm btn-outline-info" title="View Details">
+                                    <button class="btn btn-sm btn-outline-info" onclick='openShowModal(${courseJson})' title="Preview Course">
                                         <i class="bi bi-eye"></i>
+                                    </button>
+                                    <a href="/courses/${course.id}" class="btn btn-sm btn-outline-secondary" title="Full Details Page">
+                                        <i class="bi bi-box-arrow-up-right"></i>
                                     </a>
-                                    <button class="btn btn-sm btn-outline-warning" onclick='openEditModal(${JSON.stringify(course)})' title="Edit">
+                                    <button class="btn btn-sm btn-outline-warning" onclick='openEditModal(${courseJson})' title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse(${course.id})" title="Delete">
@@ -218,49 +176,32 @@
         }
     }
 
+    // --- CREATE MODAL ---
     function openCreateModal() {
-        document.getElementById('modalTitle').innerText = 'Add New Course';
-        document.getElementById('courseForm').reset();
-        document.getElementById('courseId').value = '';
-        document.getElementById('credits').value = '3';
-        document.getElementById('modalAlert').classList.add('d-none');
+        document.getElementById('createCourseForm').reset();
+        document.getElementById('create_credits').value = '3';
+        document.getElementById('createModalAlert').classList.add('d-none');
     }
 
-    function openEditModal(course) {
-        document.getElementById('modalTitle').innerText = 'Edit Course';
-        document.getElementById('courseId').value = course.id;
-        document.getElementById('code').value = course.code;
-        document.getElementById('name').value = course.name;
-        document.getElementById('credits').value = course.credits ?? 3;
-        document.getElementById('description').value = course.description || '';
-        document.getElementById('modalAlert').classList.add('d-none');
-        getModal().show();
-    }
-
-    async function handleFormSubmit(event) {
+    async function handleCreateSubmit(event) {
         event.preventDefault();
-        const alertBox = document.getElementById('modalAlert');
-        const saveBtn = document.getElementById('saveBtn');
+        const alertBox = document.getElementById('createModalAlert');
+        const saveBtn = document.getElementById('createSaveBtn');
 
         alertBox.classList.add('d-none');
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
 
-        const id = document.getElementById('courseId').value;
         const payload = {
-            code: document.getElementById('code').value.trim(),
-            name: document.getElementById('name').value.trim(),
-            credits: document.getElementById('credits').value ? parseInt(document.getElementById('credits').value) : 3,
-            description: document.getElementById('description').value.trim()
+            code: document.getElementById('create_code').value.trim(),
+            name: document.getElementById('create_name').value.trim(),
+            credits: document.getElementById('create_credits').value ? parseInt(document.getElementById('create_credits').value) : 3,
+            description: document.getElementById('create_description').value.trim()
         };
 
-        const isEdit = Boolean(id);
-        const url = isEdit ? `/courses/${id}` : '/courses';
-        const method = isEdit ? 'PUT' : 'POST';
-
         try {
-            const response = await fetch(url, {
-                method: method,
+            const response = await fetch('/courses', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -272,10 +213,10 @@
             const data = await response.json();
 
             if (response.ok) {
-                closeModal();
+                closeModal('createCourseModal');
                 loadCourses();
             } else {
-                let errorMsg = data.message || 'Operation failed.';
+                let errorMsg = data.message || 'Failed to create course.';
                 if (data.errors) {
                     errorMsg = Object.values(data.errors).flat().join('<br>');
                 }
@@ -287,10 +228,84 @@
             alertBox.classList.remove('d-none');
         } finally {
             saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Save';
+            saveBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Save Course';
         }
     }
 
+    // --- EDIT MODAL ---
+    function openEditModal(course) {
+        document.getElementById('edit_courseId').value = course.id;
+        document.getElementById('edit_code').value = course.code;
+        document.getElementById('edit_name').value = course.name;
+        document.getElementById('edit_credits').value = course.credits ?? 3;
+        document.getElementById('edit_description').value = course.description || '';
+        document.getElementById('editModalAlert').classList.add('d-none');
+        getModal('editCourseModal').show();
+    }
+
+    async function handleEditSubmit(event) {
+        event.preventDefault();
+        const alertBox = document.getElementById('editModalAlert');
+        const saveBtn = document.getElementById('editSaveBtn');
+        const id = document.getElementById('edit_courseId').value;
+
+        alertBox.classList.add('d-none');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
+
+        const payload = {
+            code: document.getElementById('edit_code').value.trim(),
+            name: document.getElementById('edit_name').value.trim(),
+            credits: document.getElementById('edit_credits').value ? parseInt(document.getElementById('edit_credits').value) : 3,
+            description: document.getElementById('edit_description').value.trim()
+        };
+
+        try {
+            const response = await fetch(`/courses/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                closeModal('editCourseModal');
+                loadCourses();
+            } else {
+                let errorMsg = data.message || 'Failed to update course.';
+                if (data.errors) {
+                    errorMsg = Object.values(data.errors).flat().join('<br>');
+                }
+                alertBox.innerHTML = errorMsg;
+                alertBox.classList.remove('d-none');
+            }
+        } catch (err) {
+            alertBox.innerText = 'Network error: ' + err.message;
+            alertBox.classList.remove('d-none');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update Course';
+        }
+    }
+
+    // --- SHOW MODAL ---
+    function openShowModal(course) {
+        document.getElementById('show_courseId').innerText = `#${course.id}`;
+        document.getElementById('show_courseCode').innerText = course.code;
+        document.getElementById('show_courseName').innerText = course.name;
+        document.getElementById('show_courseCredits').innerText = `${course.credits ?? 3} Credits`;
+        document.getElementById('show_courseStudents').innerText = `${course.students_count ?? 0} Students`;
+        document.getElementById('show_courseDescription').innerText = course.description || 'No description available.';
+        document.getElementById('show_courseFullPageLink').href = `/courses/${course.id}`;
+        getModal('showCourseModal').show();
+    }
+
+    // --- DELETE ---
     async function deleteCourse(id) {
         if (!confirm('Are you sure you want to delete this course?')) return;
 

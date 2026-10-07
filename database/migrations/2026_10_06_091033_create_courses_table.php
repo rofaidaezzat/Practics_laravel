@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('code')->unique();
+            $table->string('code'); // unique enforced in Model via $rules
             $table->text('description')->nullable();
             $table->integer('credits')->default(3);
             $table->timestamps();

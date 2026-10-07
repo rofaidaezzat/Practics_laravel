@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\StudentController;
+namespace App\Http\Controllers\Students;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
@@ -88,7 +88,7 @@ class StudentController extends Controller
      * API: Create a new student (JSON)
      * POST /api/students
      */
-    public function apiStore(Request $request)
+    public function Store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -120,23 +120,10 @@ class StudentController extends Controller
     }
 
     /**
-     * API: Get single student details (JSON)
-     * GET /students/{id}
-     */
-    public function apiShow(Student $student)
-    {
-        return response()->json([
-            'status' => 'success',
-            'code' => 200,
-            'data' => $student->load('courses'),
-        ], 200);
-    }
-
-    /**
      * API: Update student (JSON or Web)
      * PUT /students/{id}
      */
-    public function apiUpdate(Request $request, Student $student)
+    public function Update(Request $request, Student $student)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -194,7 +181,7 @@ class StudentController extends Controller
      * API: Delete student (JSON or Web)
      * DELETE /students/{id}
      */
-    public function apiDestroy(Request $request, Student $student)
+    public function Destroy(Request $request, Student $student)
     {
         $student->delete();
 

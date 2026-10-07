@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\CoursesController;
+namespace App\Http\Controllers\Courses;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Student;
 use Illuminate\Http\Request;
 
-class CoursesController extends Controller
+class CourseController extends Controller
 {
     /**
      * Display a listing of courses (HTML view or JSON API).
