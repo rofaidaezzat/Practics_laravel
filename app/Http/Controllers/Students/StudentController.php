@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Students;
 use App\Events\StudentRegistered;
 use App\Exports\StudentsExport;
 use App\Http\Controllers\Controller;
+use App\Imports\StudentsImport;
 use App\Models\Course;
 use App\Models\Student;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Validators\ValidationException;
 
 class StudentController extends Controller
 {
@@ -29,6 +31,35 @@ class StudentController extends Controller
         $students = Student::with('courses')->get();
         $pdf = Pdf::loadView('students.pdf', compact('students'));
         return $pdf->download('students.pdf');
+    }
+
+    /**
+     * Import students from uploaded Excel/CSV file
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
+        ]);
+
+        try {
+            Excel::import(new StudentsImport, $request->file('file'));
+            return redirect()->route('students.index')
+                ->with('success', 'Students imported successfully!');
+        } catch (ValidationException $e) {
+            $failures = $e->failures();
+            $errors = [];
+            foreach ($failures as $failure) {
+                foreach ($failure->errors() as $error) {
+                    $errors[] = "Row {$failure->row()}: {$error}";
+                }
+            }
+            return redirect()->route('students.index')
+                ->with('import_errors', $errors);
+        } catch (\Exception $e) {
+            return redirect()->route('students.index')
+                ->with('error', 'Import failed: ' . $e->getMessage());
+        }
     }
 
     /**
