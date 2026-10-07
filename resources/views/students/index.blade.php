@@ -9,9 +9,15 @@
             <i class="bi bi-people-fill text-primary"></i>
             <span>Students List</span>
         </h5>
-        <div>
-            <a href="{{ route('students.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-lg me-1"></i> Add New Student
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="{{ route('students.export') }}" class="btn btn-success d-flex align-items-center gap-1">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </a>
+            <a href="{{ route('students.export-pdf') }}" class="btn btn-danger d-flex align-items-center gap-1">
+                <i class="bi bi-file-earmark-pdf"></i> Download PDF
+            </a>
+            <a href="{{ route('students.create') }}" class="btn btn-primary d-flex align-items-center gap-1">
+                <i class="bi bi-plus-lg"></i> Add New Student
             </a>
         </div>
     </div>

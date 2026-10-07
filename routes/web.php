@@ -9,8 +9,9 @@ Route::get('/', function () {
     return redirect()->route('students.index');
 });
 
-// Students routes
 Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
+Route::get('/students/export-pdf', [StudentController::class, 'exportPdf'])->name('students.export-pdf');
 Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
 Route::post('/students', [StudentController::class, 'Store'])->name('students.store');
 Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');

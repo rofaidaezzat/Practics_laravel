@@ -2,13 +2,35 @@
 
 namespace App\Http\Controllers\Students;
 
+use App\Events\StudentRegistered;
+use App\Exports\StudentsExport;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Student;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StudentController extends Controller
 {
+    /**
+     * Export all students to Excel
+     */
+    public function export()
+    {
+        return Excel::download(new StudentsExport, 'students.xlsx');
+    }
+
+    /**
+     * Export all students to PDF
+     */
+    public function exportPdf()
+    {
+        $students = Student::with('courses')->get();
+        $pdf = Pdf::loadView('students.pdf', compact('students'));
+        return $pdf->download('students.pdf');
+    }
+
     /**
      * 1. Returns HTML View to the Browser, or JSON if requested
      */
@@ -106,6 +128,8 @@ class StudentController extends Controller
         }
 
         $student->load('courses');
+
+        StudentRegistered::dispatch($student);
 
         if ($request->wantsJson()) {
             return response()->json([
